@@ -1,163 +1,156 @@
-# COS — Contractor Operating System
+# Contractor Operating System (COS)
 
-Platform operasi terpadu untuk kontraktor PLN. Bukan ERP, bukan Project Management — tetapi pusat operasi perusahaan di mana seluruh tim bekerja dari satu aplikasi.
+Pusat operasi perusahaan kontraktor — bukan ERP, bukan Project Management, tetapi platform operasi yang digunakan setiap hari oleh seluruh tim: Direktur, Finance, HRD, Purchasing, Warehouse, Project Manager, Supervisor, QC, HSE, Engineer, Surveyor, Vendor, dan Owner.
 
 ## Konsep
 
-COS (Contractor Operating System) dirancang sebagai "operating system" untuk perusahaan kontraktor. Semua orang — Direktur, Finance, HRD, Purchasing, Warehouse, PM, Supervisor, QC, HSE, Engineer, Surveyor, Vendor, Owner — memakai aplikasi yang sama dengan pengalaman setara SaaS modern (Linear, ClickUp, Notion).
+Aplikasi ini dirancang sebagai **Contractor Operating System** — satu aplikasi untuk semua peran, dengan pengalaman pengguna setara SaaS modern (mirip Linear, ClickUp, GitHub).
+
+### Lima Area Utama
+
+| Area | Fungsi |
+|------|--------|
+| **Operations Hub** | Mission Control, Workspace, Timeline, Activity Feed, Approval Queue |
+| **Project Hub** | WBS, Progress, QC, HSE, Drawing, Dokumentasi, Gallery |
+| **Business Hub** | Finance, Purchasing, Warehouse, Vendor/Supplier, Asset |
+| **People Hub** | HR, SDM, Attendance, Sertifikasi, Tim |
+| **Intelligence Hub** | AI Insights, Analytics, Health Score, Prediksi |
 
 ## Fitur Utama
 
 ### Mission Control (Homepage)
-Bukan dashboard biasa, tetapi seperti Mission Control NASA:
-- Status real-time: Project Running, Delay, Safety Issue, Cashflow, Invoice, Material Delay
-- Activity Feed (universal timeline seperti GitHub)
-- Approval Queue (approve/reject langsung dari homepage)
-- Project Map (GIS dengan Leaflet)
-- Upcoming Deadlines
-- Upcoming Meetings
-- Daily Focus (todo harian per user)
-- Quick Action FAB
+Bukan dashboard biasa — seperti Mission Control dengan:
+- **Status Cards**: Project Running, Delay, Safety Issue, Cashflow, Invoice, Material Delay
+- **Activity Feed**: Timeline universal semua aktivitas perusahaan
+- **Approval Queue**: Antrian approval yang perlu ditindaklanjuti
+- **Upcoming Deadlines**: Task dan deadline mendatang
+- **Quick Actions**: Akses cepat ke aksi utama
+- **Daily Focus**: Personalisasi per user — "Halo Budi, hari ini ada..."
+- **Project Smart Cards**: Card dengan progress, health score, deadline, risk
 
 ### Command Palette (Ctrl+K)
-Cari apa saja: Project, Material, Vendor, Invoice, Worker, Drawing — tanpa berpindah menu.
-
-### Smart Cards
-Setiap data berbentuk card dengan informasi kunci: Progress, Cashflow, Deadline, Risk, Health Score. Klik card langsung masuk ke detail.
-
-### Project Health Score
-Skor otomatis per proyek (0-100) berdasarkan:
-- Progress (30%) - Schedule (25%) - Cashflow (20%) - QC (15%) - Safety (10%)
-
-Jika turun di bawah 70, dashboard menjadi merah.
-
-### AI Insights
-AI muncul di setiap halaman tanpa perlu bertanya:
-- "Progress terlambat 8%"
-- "Material akan habis 5 hari lagi"
-- "Invoice Termin 2 belum ditagih"
-- "Jadwal QC besok"
+Cari dan lompat ke mana saja: project, material, vendor, invoice, worker, drawing.
 
 ### Project Workspace
-Satu proyek = satu workspace dengan 12 tab:
-- Overview (info proyek, AI insights, termin, tasks)
-- WBS (hirarkis dengan slider progress per pekerjaan)
-- Tasks (Kanban drag & drop)
-- Timeline (aktivitas proyek)
-- Material (monitoring purchase → delivery → installed)
-- QC (inspeksi dengan checklist)
-- HSE (toolbox, permit, near miss, incident)
-- Gallery (foto dengan GPS, dikelompokkan otomatis seperti Google Photos)
-- Meetings (agenda, minutes, action items)
-- Equipment (alat berat dengan status)
-- Documents (kontrak, SPMK, addendum, BAST, NCR, RFI, ITP)
-- Finance (termin, invoice, cashflow)
+Setiap project memiliki workspace dengan tab:
+- **Overview** — ringkasan + AI insights
+- **Task** — kanban board (To Do → In Progress → Review → Done → Blocked)
+- **Timeline** — universal timeline aktivitas project
+- **WBS** — work breakdown structure dengan progress slider, QC status, approval
+- **Files** — drawing (IFC, Shop, As Built, SLD, Layout) & document (Kontrak, SPMK, Addendum, BAST, NCR, RFI, ITP)
+- **Material** — monitoring material (purchase → delivery → installed → remaining)
+- **Purchase** — kanban purchase request (Draft → Requested → Approved → Ordered → Delivered → Completed)
+- **Worker** — SDM (PM, Site Manager, Engineer, QC, HSE, Lineman, dll)
+- **Equipment** — alat (Excavator, Crane, Sky Lift, Truck, Generator, dll)
+- **QC** — checklist & inspection per jenis pekerjaan
+- **HSE** — Toolbox, Permit, Incident
+- **Meeting** — agenda, participants, minutes, action items
+- **Gallery** — foto progress dengan GPS, dikelompokkan otomatis (Hari Ini, Kemarin, Minggu Ini, Bulan Ini)
 
-### Kanban
-Purchase Request dengan drag & drop: Draft → Requested → Approved → Ordered → Delivered → Completed.
+### Project Health Score
+Setiap project mendapat skor otomatis berdasarkan progress, schedule, dan status. Jika turun di bawah 70, card menjadi merah.
 
-### Master Project dengan Field PLN
-UP2D, UID, UP3, ULP, SPMK No, PM, Jenis Project (Distribusi, Transmisi, Gardu Induk, Pembangkit, Jasa).
+### AI Insights
+AI muncul di setiap halaman project — menampilkan peringatan otomatis:
+- Progress terlambat
+- Material akan habis
+- Invoice termin belum ditagih
+- Jadwal QC
 
-### Supplier Directory (Marketplace Vendor Internal)
-- Directory supplier
-- Rating dan lead time
-- Riwayat harga material
-- Perbandingan penawaran
+### GIS Map
+Semua project tampil di peta interaktif (Leaflet). Klik marker untuk melihat progress, PIC, lokasi.
 
-## Arsitektur Produk
+### Sidebar Modern
+Navigasi mirip Linear: Home, Projects, Material, Warehouse, Finance, HR, Documents, Equipment, Tenders, Vendors, GIS Map, Gallery, Reports, Settings.
 
-| Area | Fungsi |
-|------|--------|
-| Operations Hub | Dashboard, Workspace, Timeline, Activity Feed, Command Palette |
-| Project Hub | WBS, Progress, QC, HSE, Drawing, Gallery, Documents |
-| Business Hub | Finance, Purchasing, Warehouse, Material, Supplier |
-| People Hub | HR, Personnel, Sertifikasi, Attendance |
-| Intelligence Hub | AI Insights, Analytics, Health Score, Reports |
+### Smart Notification
+Hanya notifikasi penting yang muncul: Project Delay, QC Reject, Invoice Paid, Stock Low, Safety Incident.
 
 ## Tech Stack
 
 - **Frontend**: React 18 + TypeScript + Vite
 - **Backend**: Supabase (PostgreSQL + Auth + RLS)
-- **Maps**: Leaflet + React-Leaflet
+- **Map**: Leaflet + React-Leaflet
 - **Charts**: Recharts
 - **Routing**: React Router v6
 
 ## Database Schema
 
-30+ tabel dengan Row Level Security (RLS):
+### Core & Procurement
+- `profiles` — user dengan role (vendor, director, finance, hrd, purchasing, pm, supervisor, qc, hse, engineer, surveyor, owner)
+- `vendor_profiles` — DPT status, company details
+- `vendor_documents` — dokumen legalitas
+- `tenders` — pengadaan dengan field PLN (UP2D, UID, UP3, ULP, SPMK, PM, Jenis Project)
+- `tender_items`, `tender_schedules`, `tender_clarifications`
+- `bids`, `bid_items` — penawaran vendor
+- `evaluation_aspects`, `evaluations` — evaluasi
+- `awards` — hasil pengadaan
 
-### Core
-- `profiles` — multi-role (14 peran)
-- `projects` — master project dengan field PLN + GIS + health_score
-- `project_wbs` — WBS hirarkis
+### Project Management
+- `projects` — dengan field PLN lengkap, koordinat GIS, health score
+- `project_wbs` — WBS dengan target/volume/foto/dokumen/QC/approval
 - `project_termin` — termin pembayaran
 - `project_cashflow` — cashflow rencana vs aktual
-- `tasks` — task Kanban dengan checklist
+- `project_templates`, `project_template_wbs` — template per jenis project
+- `equipment` — unit alat
+- `personnel` — SDM dengan sertifikasi
+
+### QC, HSE, Progress
+- `qc_checklists`, `qc_checklist_items`, `qc_inspections`
+- `hse_toolbox`, `hse_jsa`, `hse_permits`, `hse_apd`, `hse_near_miss`, `hse_incidents`
+- `daily_progress`, `daily_progress_items`, `daily_photos` — dengan GPS + watermark
+- `drawings` — IFC, Shop, As Built, SLD, Layout dengan revision
+- `documents` — Kontrak, SPMK, Addendum, BAST, NCR, RFI, ITP
+
+### Material & Warehouse
+- `materials` — katalog
+- `warehouses` — gudang dengan koordinat GIS
+- `inventory` — stok per gudang
+- `material_movements` — pergerakan (purchase, delivery, installed, transfer)
+- `project_assets` — asset setelah project (warranty, maintenance)
+
+### COS Core
 - `activity_feed` — universal timeline
 - `approvals` — approval queue
+- `notifications` — smart notifications
+- `tasks` — universal tasks dengan kanban
+- `meetings`, `meeting_action_items`
+- `invoices` — invoice management
+- `purchase_requests`, `purchase_items` — purchase lifecycle
+- `suppliers` — supplier directory dengan rating & lead time
 
-### Business
-- `materials`, `warehouses`, `inventory`, `material_movements`
-- `purchases`, `purchase_items` — Kanban purchasing
-- `invoices` — finance dengan status tracking
-- `equipment` — alat berat dengan QR
-- `suppliers`, `supplier_price_history` — vendor marketplace
-
-### People
-- `personnel` — SDM dengan sertifikasi
-- `attendance` — absensi dengan GPS
-
-### Project Hub
-- `qc_checklists`, `qc_checklist_items`, `qc_inspections`
-- `hse_toolbox`, `hse_permits`, `hse_near_miss`, `hse_incidents`
-- `drawings` — dengan revision dan type
-- `documents` — kontrak, SPMK, addendum, BAST, NCR, RFI, ITP
-- `photos` — gallery dengan GPS + watermark
-- `daily_progress` — progress harian
-- `meetings` — dengan agenda dan action items
-
-## Roadmap
-
-### Sudah Diimplementasi
-- [x] Mission Control dengan stats, activity feed, approval queue, map
-- [x] Command Palette (Ctrl+K)
-- [x] Project Workspace (12 tab)
-- [x] Smart Cards dengan Health Score
-- [x] Kanban Purchase
-- [x] WBS dengan slider progress
-- [x] GIS Map (Leaflet)
-- [x] Gallery foto dengan grouping
-- [x] AI Insights per proyek
-- [x] Supplier Directory
-- [x] Equipment, HR, Documents, Reports
-- [x] Multi-role auth (14 peran)
-
-### Tahap Berikutnya
-- [ ] Offline First (PWA + sync)
-- [ ] QR Code scanner
-- [ ] Dashboard Builder (custom widgets)
-- [ ] Report Builder (filter → kolom → export)
-- [ ] Smart Search global
-- [ ] Predictive Analytics (ML)
-- [ ] Digital Twin (asset di peta)
-- [ ] IoT Ready (GPS kendaraan, fuel sensor, CCTV AI)
-- [ ] File Manager dengan versioning
-- [ ] Meeting dengan video call
-- [ ] Infinite Table (sticky, resize, group, export)
-- [ ] Approval Engine terpadu
-- [ ] BOQ Engine (import Excel RAB)
-- [ ] Drawing Compare
-
-## Menjalankan
+## Setup
 
 ```bash
 npm install
 npm run dev
 ```
 
-Aplikasi berjalan di `http://localhost:5173`.
+Database dan auth sudah terkonfigurasi via Supabase. Semua env vars sudah pre-populated.
 
-## Lisensi
+## Roadmap
 
-Proprietary — Internal use only.
+- [x] Mission Control dengan stats & activity feed
+- [x] Project Workspace dengan 13 tab
+- [x] WBS dengan progress slider & approval
+- [x] Kanban untuk Task & Purchase Request
+- [x] GIS Map dengan Leaflet
+- [x] Gallery dengan auto-grouping
+- [x] Command Palette (Ctrl+K)
+- [x] Smart Notifications
+- [x] AI Insights per project
+- [x] Health Score
+- [ ] Offline First (PWA + sync)
+- [ ] QR Everything
+- [ ] Dashboard Builder
+- [ ] Report Builder dengan export Excel/PDF
+- [ ] Predictive Analytics
+- [ ] Digital Twin
+- [ ] IoT Ready
+- [ ] Drawing Compare
+- [ ] BOQ Engine (import Excel RAB)
+- [ ] Approval Engine terpadu
+
+## License
+
+Private — Internal use
