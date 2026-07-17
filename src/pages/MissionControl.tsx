@@ -1,103 +1,86 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
-import { StatCard, Badge, ProgressBar, HealthScore, formatCurrency, formatDate, timeAgo, calcHealthScore } from '../components/ui';
-import type { Project, ActivityFeedItem, Approval, Task } from '../types';
+import { StatCard, Badge, ProgressBar, HealthRing, formatCurrency, formatDate, timeAgo, daysUntil } from '../components/ui';
+import type { Project, ActivityItem, Approval, Meeting } from '../types';
+import { ProjectMap } from '../components/ProjectMap';
 
 export function MissionControl() {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [activities, setActivities] = useState<ActivityFeedItem[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [approvals, setApprovals] = useState<Approval[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [invoiceTotal, setInvoiceTotal] = useState(0);
-  const [cashflowPct, setCashflowPct] = useState(0);
-  const [safetyIssues, setSafetyIssues] = useState(0);
-  const [materialDelays, setMaterialDelays] = useState(0);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [incidents, setIncidents] = useState<any[]>([]);
 
-  const load = useCallback(async () => {
-    const { data: p } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
-    setProjects(p || []);
-    const running = (p || []).filter(x => x.status === 'active').length;
-    const delayed = (p || []).filter(x => x.status === 'active' && x.progress < 50).length;
-
-    const { data: a } = await supabase.from('activity_feed').select('*').order('created_at', { ascending: false }).limit(30);
-    setActivities(a || []);
-
-    const { data: ap } = await supabase.from('approvals').select('*').eq('status', 'pending').order('created_at', { ascending: false }).limit(10);
-    setApprovals(ap || []);
-
-    const { data: t } = await supabase.from('tasks').select('*').neq('status', 'done').order('due_date', { ascending: true }).limit(10);
-    setTasks(t || []);
-
-    const { data: inv } = await supabase.from('invoices').select('total').eq('status', 'paid');
-    const total = (inv || []).reduce((s, i: any) => s + (i.total || 0), 0);
-    setInvoiceTotal(total);
-
-    const { count } = await supabase.from('hse_incidents').select('*', { count: 'exact', head: true }).eq('status', 'open');
-    setSafetyIssues(count || 0);
-
-    setMaterialDelays(0);
-    setCashflowPct(12);
-    void running; void delayed;
+  useEffect(() => {
+    (async () => {
+      const [p, act, appr, mtg, inv, inc] = await Promise.all([
+        supabase.from('projects').select('*').order('created_at', { ascending: false }),
+        supabase.from('activity_feed').select('*').order('created_at', { ascending: false }).limit(15),
+        supabase.from('approvals').select('*').eq('status', 'pending').order('created_at', { ascending: false }).limit(5),
+        supabase.from('meetings').select('*').gte('meeting_date', new Date().toISOString()).order('meeting_date').limit(5),
+        supabase.from('invoices').select('*').neq('status', 'paid').order('created_at', { ascending: false }).limit(5),
+        supabase.from('hse_incidents').select('*').eq('status', 'open').limit(5),
+      ]);
+      setProjects(p.data || []);
+      setActivities(act.data || []);
+      setApprovals(appr.data || []);
+      setMeetings(mtg.data || []);
+      setInvoices(inv.data || []);
+      setIncidents(inc.data || []);
+    })();
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  const running = projects.filter((p) => p.status === 'active');
+  const delayed = projects.filter((p) => p.status === 'active' && p.progress < 50 && daysUntil(p.end_date) < 30 && daysUntil(p.end_date) > 0);
+  const totalInvoice = invoices.reduce((s, i) => s + (i.total_amount || 0), 0);
 
-  const running = projects.filter(p => p.status === 'active').length;
-  const delayed = projects.filter(p => p.status === 'active' && p.progress < 50).length;
-  const todayTasks = tasks.filter(t => t.due_date === new Date().toISOString().slice(0, 10));
+  const resolveApproval = async (id: string, status: 'approved' | 'rejected') => {
+    await supabase.from('approvals').update({
+      status, approved_by_name: profile?.full_name,
+      approved_by: profile?.id, resolved_at: new Date().toISOString(),
+    }).eq('id', id);
+    setApprovals((prev) => prev.filter((a) => a.id !== id));
+  };
 
   return (
     <div className="page">
       {/* Daily Focus */}
-      <div className="card" style={{ marginBottom: 24, background: 'linear-gradient(135deg, var(--primary-600), var(--primary-800))', color: '#fff', border: 'none' }}>
-        <h2 style={{ color: '#fff', fontSize: 18 }}>Halo, {profile?.full_name?.split(' ')[0] || ''} 👋</h2>
-        <p style={{ color: 'rgba(255,255,255,.8)', fontSize: 14, marginTop: 4 }}>Hari ini ada {approvals.length} approval, {todayTasks.length} task, {tasks.length} total pekerjaan</p>
+      <div className="card" style={{ marginBottom: 24, background: 'linear-gradient(135deg, var(--primary-600), var(--primary-800))', border: 'none', color: '#fff' }}>
+        <h2 style={{ color: '#fff', fontSize: 20 }}>Halo, {profile?.full_name}</h2>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, marginTop: 4 }}>Hari ini ada {approvals.length} approval, {meetings.length} meeting, dan beberapa tugas menunggu.</p>
+        <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
+          {approvals.length > 0 && <div style={{ background: 'rgba(255,255,255,0.15)', padding: '8px 16px', borderRadius: 8, fontSize: 13 }}>✔ {approvals.length} Approval</div>}
+          {meetings.length > 0 && <div style={{ background: 'rgba(255,255,255,0.15)', padding: '8px 16px', borderRadius: 8, fontSize: 13 }}>📅 {meetings.length} Meeting</div>}
+          {running.length > 0 && <div style={{ background: 'rgba(255,255,255,0.15)', padding: '8px 16px', borderRadius: 8, fontSize: 13 }}>📂 {running.length} Proyek Aktif</div>}
+          {incidents.length > 0 && <div style={{ background: 'rgba(239,68,68,0.3)', padding: '8px 16px', borderRadius: 8, fontSize: 13 }}>🔴 {incidents.length} Safety Issue</div>}
+        </div>
       </div>
 
       {/* Mission Control Stats */}
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <StatCard label="Project Running" value={running} color="var(--success-500)" />
-        <StatCard label="Project Delay" value={delayed} color="var(--warning-500)" />
-        <StatCard label="Safety Issue" value={safetyIssues} color={safetyIssues > 0 ? 'var(--error-500)' : 'var(--success-500)'} />
-        <StatCard label="Cashflow" value={`+${cashflowPct}%`} color="var(--success-500)" />
-        <StatCard label="Invoice Paid" value={formatCurrency(invoiceTotal)} />
-        <StatCard label="Material Delay" value={materialDelays} color="var(--warning-500)" />
-        <StatCard label="Pending Approval" value={approvals.length} color={approvals.length > 0 ? 'var(--warning-500)' : 'var(--success-500)'} />
-        <StatCard label="Open Tasks" value={tasks.length} />
-      </div>
-
-      {/* Quick Actions */}
-      <div className="card" style={{ marginBottom: 24 }}>
-        <h3 style={{ marginBottom: 12, fontSize: 16 }}>Quick Action</h3>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {[
-            { label: '+ Project', to: '/projects' },
-            { label: '+ Purchase', to: '/warehouse' },
-            { label: '+ Invoice', to: '/finance' },
-            { label: '+ Employee', to: '/hr' },
-            { label: '+ Progress', to: '/projects' },
-            { label: '+ Equipment', to: '/equipment' },
-          ].map(a => (
-            <button key={a.label} className="btn btn-secondary" onClick={() => navigate(a.to)}>{a.label}</button>
-          ))}
-        </div>
+        <StatCard label="Project Running" value={running.length} color="var(--success-500)" icon="📂" />
+        <StatCard label="Project Delay" value={delayed.length} color={delayed.length > 0 ? 'var(--warning-500)' : 'var(--success-500)'} icon="🟠" />
+        <StatCard label="Safety Issue" value={incidents.length} color={incidents.length > 0 ? 'var(--error-500)' : 'var(--success-500)'} icon="🔴" />
+        <StatCard label="Invoice Outstanding" value={formatCurrency(totalInvoice)} icon="💰" />
       </div>
 
       <div className="grid grid-2" style={{ marginBottom: 24 }}>
         {/* Activity Feed */}
         <div className="card">
-          <h3 style={{ marginBottom: 12, fontSize: 16 }}>Activity Feed</h3>
-          {activities.length === 0 ? <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Belum ada aktivitas</p> :
-            activities.slice(0, 15).map(a => (
-              <div key={a.id} className="activity-item">
-                <div className="activity-dot" style={{ background: a.activity_type === 'safety' ? 'var(--error-500)' : a.activity_type === 'approval' ? 'var(--warning-500)' : 'var(--primary-400)' }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14 }}>{a.message}</div>
-                  <div className="activity-time">{timeAgo(a.created_at)}</div>
+          <h3 style={{ marginBottom: 16 }}>Activity Feed</h3>
+          {activities.length === 0 ? <p style={{ color: 'var(--text-muted)' }}>Belum ada aktivitas</p> :
+            activities.map((a) => (
+              <div key={a.id} className="timeline-item">
+                <div className="timeline-dot" style={{ background: 'var(--primary-500)' }} />
+                <div className="timeline-content">
+                  <div style={{ fontSize: 14 }}><strong>{a.user_name || 'System'}</strong> {a.action}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{a.description}</div>
+                  <div className="timeline-time">{timeAgo(a.created_at)}</div>
                 </div>
               </div>
             ))
@@ -106,75 +89,81 @@ export function MissionControl() {
 
         {/* Approval Queue */}
         <div className="card">
-          <h3 style={{ marginBottom: 12, fontSize: 16 }}>Approval Queue</h3>
-          {approvals.length === 0 ? <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Tidak ada approval pending</p> :
-            approvals.map(ap => (
-              <div key={ap.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 500 }}>{ap.approval_type}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{timeAgo(ap.created_at)}</div>
+          <h3 style={{ marginBottom: 16 }}>Approval Queue</h3>
+          {approvals.length === 0 ? <p style={{ color: 'var(--text-muted)' }}>Tidak ada approval menunggu</p> :
+            approvals.map((a) => (
+              <div key={a.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                  <div>
+                    <div style={{ fontWeight: 500, fontSize: 14 }}>{a.entity_name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{a.entity_type} - {a.requested_by_name}</div>
+                  </div>
+                  <Badge status={a.priority} />
                 </div>
-                <Badge status={ap.status} />
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button className="btn btn-sm btn-primary" onClick={() => resolveApproval(a.id, 'approved')}>Setujui</button>
+                  <button className="btn btn-sm btn-outline" onClick={() => resolveApproval(a.id, 'rejected')}>Tolak</button>
+                </div>
               </div>
             ))
           }
         </div>
       </div>
 
-      {/* Upcoming Deadlines */}
-      <div className="card" style={{ marginBottom: 24 }}>
-        <h3 style={{ marginBottom: 12, fontSize: 16 }}>Upcoming Deadline</h3>
-        {tasks.length === 0 ? <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Tidak ada deadline</p> :
-          <table className="table">
-            <thead><tr><th>Task</th><th>Assignee</th><th>Priority</th><th>Due Date</th><th>Status</th></tr></thead>
-            <tbody>
-              {tasks.slice(0, 8).map(t => (
-                <tr key={t.id}>
-                  <td>{t.title}</td>
-                  <td>{t.assigned_to_name || '-'}</td>
-                  <td><Badge status={t.priority} /></td>
-                  <td>{formatDate(t.due_date)}</td>
-                  <td><Badge status={t.status} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        }
+      {/* Project Map */}
+      <div className="card" style={{ marginBottom: 24, padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '20px 20px 0' }}><h3>Project Map</h3></div>
+        <div style={{ padding: 16 }}>
+          <ProjectMap projects={projects} />
+        </div>
       </div>
 
-      {/* Project Smart Cards */}
-      <h3 style={{ marginBottom: 12, fontSize: 16 }}>Project</h3>
-      {projects.length === 0 ? <div className="card"><p style={{ color: 'var(--text-muted)' }}>Belum ada project. Buat project pertama Anda.</p></div> :
-        <div className="grid grid-3">
-          {projects.slice(0, 6).map(p => {
-            const score = calcHealthScore(p);
-            return (
-              <div key={p.id} className="card" style={{ cursor: 'pointer', transition: 'box-shadow 180ms ease' }}
-                onMouseEnter={e => (e.currentTarget.style.boxShadow = 'var(--shadow-md)')}
-                onMouseLeave={e => (e.currentTarget.style.boxShadow = 'var(--shadow-sm)')}
-                onClick={() => navigate(`/projects/${p.id}`)}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                  <div>
-                    <h4 style={{ fontSize: 15 }}>{p.name}</h4>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{p.project_type || '-'} • {p.location_name || '-'}</span>
-                  </div>
-                  <HealthScore score={score} />
-                </div>
-                <div style={{ marginBottom: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Progress</span><span>{p.progress}%</span>
-                  </div>
-                  <ProgressBar value={p.progress} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)' }}>
-                  <span>Kontrak: {formatCurrency(p.contract_value || 0)}</span>
-                  <Badge status={p.status} />
-                </div>
+      <div className="grid grid-3">
+        {/* Upcoming Deadlines */}
+        <div className="card">
+          <h3 style={{ marginBottom: 16 }}>Upcoming Deadlines</h3>
+          {projects.filter((p) => p.end_date && daysUntil(p.end_date) > 0 && daysUntil(p.end_date) < 60).slice(0, 5).map((p) => (
+            <div key={p.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => navigate(`/projects/${p.id}`)}>
+              <div style={{ fontWeight: 500, fontSize: 14 }}>{p.name}</div>
+              <div style={{ fontSize: 12, color: daysUntil(p.end_date) < 14 ? 'var(--error-600)' : 'var(--text-muted)' }}>
+                {daysUntil(p.end_date)} hari lagi - {formatDate(p.end_date)}
               </div>
-            );
-          })}
+            </div>
+          ))}
+          {projects.length === 0 && <p style={{ color: 'var(--text-muted)' }}>Tidak ada deadline</p>}
         </div>
-      }
+
+        {/* Smart Project Cards */}
+        <div className="card">
+          <h3 style={{ marginBottom: 16 }}>Project Health</h3>
+          {running.slice(0, 5).map((p) => (
+            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => navigate(`/projects/${p.id}`)}>
+              <HealthRing score={p.health_score} size={48} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 500, fontSize: 14 }}>{p.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Progress {p.progress}%</div>
+              </div>
+            </div>
+          ))}
+          {running.length === 0 && <p style={{ color: 'var(--text-muted)' }}>Belum ada proyek aktif</p>}
+        </div>
+
+        {/* Meetings */}
+        <div className="card">
+          <h3 style={{ marginBottom: 16 }}>Upcoming Meetings</h3>
+          {meetings.length === 0 ? <p style={{ color: 'var(--text-muted)' }}>Tidak ada meeting</p> :
+            meetings.map((m) => (
+              <div key={m.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ fontWeight: 500, fontSize: 14 }}>{m.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{formatDate(m.meeting_date)} - {m.duration_min} min</div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      {/* Quick Action FAB */}
+      <button className="fab" onClick={() => navigate('/projects')} title="Quick Add">+</button>
     </div>
   );
 }
