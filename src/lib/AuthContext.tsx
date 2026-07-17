@@ -15,35 +15,39 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+async function fetchProfile(userId: string): Promise<Profile | null> {
+  const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+  return data as Profile | null;
+}
+
+async function createProfile(user: User, fullName: string, role: UserRole) {
+  await supabase.from('profiles').insert({ id: user.id, email: user.email, full_name: fullName, role });
+  if (role === 'vendor') {
+    await supabase.from('vendor_profiles').insert({ user_id: user.id, company_name: fullName });
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadProfile = async (uid: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
-    setProfile(data as Profile | null);
-    setLoading(false);
-  };
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
-      if (data.session?.user) loadProfile(data.session.user.id);
-      else setLoading(false);
+      if (data.session?.user) {
+        fetchProfile(data.session.user.id).then((p) => { setProfile(p); setLoading(false); });
+      } else { setLoading(false); }
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
-        (async () => { await loadProfile(newSession.user.id); })();
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
+        (async () => { const p = await fetchProfile(newSession.user.id); setProfile(p); setLoading(false); })();
+      } else { setProfile(null); setLoading(false); }
     });
 
     return () => listener.subscription.unsubscribe();
@@ -57,18 +61,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, fullName: string, role: UserRole) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { error: error.message };
-    if (data.user) {
-      await supabase.from('profiles').insert({
-        id: data.user.id, email, full_name: fullName, role,
-      });
-    }
+    if (data.user) await createProfile(data.user, fullName, role);
     return { error: null };
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
-  };
+  const signOut = async () => { await supabase.auth.signOut(); setProfile(null); };
 
   return (
     <AuthContext.Provider value={{ session, user, profile, loading, signIn, signUp, signOut }}>
