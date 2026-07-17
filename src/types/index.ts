@@ -1,7 +1,4 @@
-export type UserRole =
-  | 'direktur' | 'finance' | 'hrd' | 'purchasing' | 'warehouse'
-  | 'pm' | 'supervisor' | 'qc' | 'hse' | 'engineer' | 'surveyor'
-  | 'vendor' | 'owner' | 'admin';
+export type UserRole = 'vendor' | 'director' | 'admin' | 'finance' | 'purchasing' | 'hrd' | 'pm' | 'supervisor' | 'qc' | 'hse' | 'engineer' | 'surveyor' | 'owner';
 
 export interface Profile {
   id: string;
@@ -9,28 +6,99 @@ export interface Profile {
   full_name: string;
   role: UserRole;
   phone?: string;
-  avatar_url?: string;
-  department?: string;
+}
+
+export interface VendorProfile {
+  id: string;
+  user_id: string;
+  company_name: string;
+  npwp?: string;
+  address?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  dpt_status: 'pending' | 'approved' | 'rejected' | 'suspended';
+  dpt_number?: string;
+  dpt_expiry?: string;
+  classification?: string;
+}
+
+export interface Tender {
+  id: string;
+  tender_number: string;
+  title: string;
+  description?: string;
+  up2d?: string;
+  uid?: string;
+  up3?: string;
+  ulp?: string;
+  spmk_no?: string;
+  pm_name?: string;
+  project_type?: string;
+  hps?: number;
+  status: string;
+  open_date?: string;
+  close_date?: string;
+  created_at: string;
+}
+
+export interface TenderItem {
+  id: string;
+  tender_id: string;
+  name: string;
+  description?: string;
+  volume: number;
+  unit: string;
+  hps_price: number;
+}
+
+export interface Bid {
+  id: string;
+  tender_id: string;
+  vendor_id: string;
+  total_value: number;
+  status: string;
+  submitted_at?: string;
+  created_at: string;
+}
+
+export interface Award {
+  id: string;
+  tender_id: string;
+  bid_id: string;
+  vendor_id: string;
+  contract_value: number;
+  spk_number?: string;
+  spk_date?: string;
+  status: string;
 }
 
 export interface Project {
   id: string;
+  tender_id?: string;
+  award_id?: string;
+  vendor_id?: string;
   name: string;
   description?: string;
-  up2d?: string; uid?: string; up3?: string; ulp?: string;
-  spmk_no?: string; spmk_date?: string; pm_name?: string;
+  up2d?: string;
+  uid?: string;
+  up3?: string;
+  ulp?: string;
+  spmk_no?: string;
+  spmk_date?: string;
+  pm_name?: string;
   project_type?: string;
   contract_value?: number;
-  start_date?: string; end_date?: string;
+  start_date?: string;
+  end_date?: string;
   progress: number;
   status: string;
-  risk_level: string;
-  health_score: number;
-  latitude?: number; longitude?: number; location_name?: string;
-  created_at: string;
+  latitude?: number;
+  longitude?: number;
+  location_name?: string;
 }
 
-export interface WBS {
+export interface ProjectWBS {
   id: string;
   project_id: string;
   parent_id?: string;
@@ -46,102 +114,32 @@ export interface WBS {
   end_date?: string;
   qc_status?: string;
   approval_status: string;
+  approved_by?: string;
+  approved_at?: string;
   photo_url?: string;
   doc_url?: string;
 }
 
-export interface Task {
+export interface ProjectTermin {
   id: string;
-  project_id?: string;
-  title: string;
+  project_id: string;
+  termin_no: number;
   description?: string;
-  status: string;
-  priority: string;
-  assignee_id?: string;
-  due_date?: string;
-  checklist?: any[];
-  created_at: string;
-}
-
-export interface ActivityItem {
-  id: string;
-  user_name: string;
-  action: string;
-  entity_type: string;
-  entity_id: string;
-  project_id?: string;
-  description: string;
-  metadata?: any;
-  created_at: string;
-}
-
-export interface Approval {
-  id: string;
-  entity_type: string;
-  entity_id: string;
-  entity_name: string;
-  requested_by_name: string;
-  approved_by_name?: string;
-  status: string;
-  notes?: string;
-  priority: string;
-  created_at: string;
-}
-
-export interface Material {
-  id: string;
-  code?: string;
-  name: string;
-  category?: string;
-  unit: string;
-  specification?: string;
-  qr_code?: string;
-}
-
-export interface Warehouse {
-  id: string;
-  project_id?: string;
-  name: string;
-  location?: string;
-  latitude?: number;
-  longitude?: number;
-  qr_code?: string;
-}
-
-export interface Inventory {
-  id: string;
-  warehouse_id: string;
-  material_id: string;
-  quantity: number;
-  min_stock: number;
-  unit_price: number;
-}
-
-export interface Purchase {
-  id: string;
-  pr_number: string;
-  project_id?: string;
-  supplier_id?: string;
-  title: string;
-  description?: string;
-  total_amount: number;
-  status: string;
-  requested_by_name?: string;
-  created_at: string;
-}
-
-export interface Invoice {
-  id: string;
-  invoice_number: string;
-  project_id?: string;
-  type?: string;
   amount: number;
-  tax_amount?: number;
-  total_amount: number;
+  percentage: number;
   status: string;
-  issue_date?: string;
-  due_date?: string;
+  invoice_date?: string;
   paid_date?: string;
+}
+
+export interface ProjectCashflow {
+  id: string;
+  project_id: string;
+  month_date: string;
+  planned_in: number;
+  planned_out: number;
+  actual_in: number;
+  actual_out: number;
 }
 
 export interface Equipment {
@@ -155,7 +153,6 @@ export interface Equipment {
   status: string;
   rental_rate?: number;
   operator?: string;
-  qr_code?: string;
 }
 
 export interface Personnel {
@@ -169,7 +166,6 @@ export interface Personnel {
   license_expiry?: string;
   status: string;
   daily_rate?: number;
-  qr_code?: string;
 }
 
 export interface DailyProgress {
@@ -183,9 +179,9 @@ export interface DailyProgress {
   issues?: string;
 }
 
-export interface Photo {
+export interface DailyPhoto {
   id: string;
-  project_id?: string;
+  daily_id: string;
   wbs_id?: string;
   photo_url: string;
   caption?: string;
@@ -193,8 +189,6 @@ export interface Photo {
   longitude?: number;
   taken_at: string;
   watermark?: string;
-  uploaded_by_name?: string;
-  category?: string;
 }
 
 export interface Drawing {
@@ -206,7 +200,6 @@ export interface Drawing {
   revision: string;
   file_url?: string;
   status: string;
-  qr_code?: string;
 }
 
 export interface ProjectDocument {
@@ -219,6 +212,79 @@ export interface ProjectDocument {
   file_url?: string;
   status: string;
   notes?: string;
+}
+
+export interface Material {
+  id: string;
+  code?: string;
+  name: string;
+  category?: string;
+  unit: string;
+  specification?: string;
+}
+
+export interface Warehouse {
+  id: string;
+  project_id?: string;
+  name: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface Inventory {
+  id: string;
+  warehouse_id: string;
+  material_id: string;
+  quantity: number;
+  min_stock: number;
+  unit_price: number;
+}
+
+export interface MaterialMovement {
+  id: string;
+  project_id?: string;
+  warehouse_id?: string;
+  material_id: string;
+  movement_type: string;
+  quantity: number;
+  unit?: string;
+  unit_price?: number;
+  reference_no?: string;
+  movement_date: string;
+  notes?: string;
+}
+
+export interface ProjectAsset {
+  id: string;
+  project_id: string;
+  asset_name: string;
+  asset_type?: string;
+  serial_number?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  warranty_start?: string;
+  warranty_end?: string;
+  maintenance_schedule?: string;
+  last_maintenance?: string;
+  next_maintenance?: string;
+  status: string;
+  notes?: string;
+}
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  project_type: string;
+  description?: string;
+}
+
+export interface QCChecklist {
+  id: string;
+  name: string;
+  work_type?: string;
+  description?: string;
 }
 
 export interface QCInspection {
@@ -253,6 +319,7 @@ export interface HSEPermit {
   location?: string;
   description?: string;
   status: string;
+  approved_by?: string;
 }
 
 export interface HSEIncident {
@@ -263,7 +330,75 @@ export interface HSEIncident {
   location?: string;
   description: string;
   casualties?: string;
+  root_cause?: string;
+  corrective_action?: string;
+  reported_by?: string;
   status: string;
+}
+
+export interface VendorDocument {
+  id: string;
+  vendor_id: string;
+  doc_type: string;
+  doc_name?: string;
+  file_url?: string;
+  status: string;
+  uploaded_at: string;
+}
+
+export interface ActivityFeedItem {
+  id: string;
+  project_id?: string;
+  user_id?: string;
+  activity_type: string;
+  message: string;
+  ref_type?: string;
+  ref_id?: string;
+  metadata?: Record<string, any>;
+  created_at: string;
+}
+
+export interface Approval {
+  id: string;
+  approval_type: string;
+  ref_id?: string;
+  project_id?: string;
+  requester_id: string;
+  approver_id?: string;
+  status: string;
+  notes?: string;
+  created_at: string;
+  resolved_at?: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  user_id?: string;
+  project_id?: string;
+  priority: string;
+  notification_type: string;
+  title: string;
+  message?: string;
+  ref_type?: string;
+  ref_id?: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface Task {
+  id: string;
+  project_id?: string;
+  title: string;
+  description?: string;
+  assignee_id?: string;
+  assigned_to_name?: string;
+  status: string;
+  priority: string;
+  due_date?: string;
+  checklist?: any[];
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Meeting {
@@ -271,12 +406,54 @@ export interface Meeting {
   project_id?: string;
   title: string;
   agenda?: string;
-  meeting_date: string;
-  duration_min: number;
-  participants?: string[];
+  participants?: string;
   minutes?: string;
-  action_items?: any[];
+  attachments?: string;
+  meeting_date: string;
   status: string;
+  created_by?: string;
+  created_at: string;
+}
+
+export interface Invoice {
+  id: string;
+  project_id?: string;
+  invoice_no: string;
+  vendor_id?: string;
+  termin_id?: string;
+  amount: number;
+  tax: number;
+  total: number;
+  status: string;
+  invoice_date?: string;
+  due_date?: string;
+  paid_date?: string;
+  notes?: string;
+}
+
+export interface PurchaseRequest {
+  id: string;
+  pr_number: string;
+  project_id?: string;
+  warehouse_id?: string;
+  supplier_id?: string;
+  requestor_id?: string;
+  status: string;
+  total_amount: number;
+  notes?: string;
+  expected_date?: string;
+  created_at: string;
+}
+
+export interface PurchaseItem {
+  id: string;
+  purchase_id: string;
+  material_id?: string;
+  description: string;
+  quantity: number;
+  unit?: string;
+  unit_price: number;
+  total_price: number;
 }
 
 export interface Supplier {
@@ -287,26 +464,7 @@ export interface Supplier {
   phone?: string;
   email?: string;
   address?: string;
-  rating?: number;
-  lead_time_days?: number;
-}
-
-export interface ProjectTermin {
-  id: string;
-  project_id: string;
-  termin_no: number;
-  description?: string;
-  amount: number;
-  percentage: number;
-  status: string;
-}
-
-export interface ProjectCashflow {
-  id: string;
-  project_id: string;
-  month_date: string;
-  planned_in: number;
-  planned_out: number;
-  actual_in: number;
-  actual_out: number;
+  rating: number;
+  lead_time_days: number;
+  notes?: string;
 }
